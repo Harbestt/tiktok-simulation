@@ -733,8 +733,8 @@ html, body, #root {
   object-fit: contain;
   object-position: bottom;
   z-index: 101;
-  mask-image: linear-gradient(to bottom, transparent 0%, black 15%, black 100%);
-  -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 15%, black 100%);
+  mask-image: linear-gradient(to bottom, transparent 0%, black 20%, black 100%);
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 20%, black 100%);
   pointer-events: none;
 }
 

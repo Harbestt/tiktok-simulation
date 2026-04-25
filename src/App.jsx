@@ -174,8 +174,8 @@ function App() {
     setShowGiftPanel(false);
     const me = { name: 'You', avatar: 'https://i.pravatar.cc/40?img=47', level: 50 };
     if (selectedGift.tier === 'epic' || selectedGift.cost >= 5000) {
-      setFullScreenGift({ gift: selectedGift, user: me });
-      setTimeout(() => setFullScreenGift(null), 8000);
+      setFullScreenGift({ gift: selectedGift, user: me, triggerId: Date.now() });
+      // Let onEnded handle cleanup
     }
     triggerGiftNotif(me, selectedGift);
     setSelectedGift(null);
@@ -236,8 +236,8 @@ function App() {
         const gift = bigGifts[Math.floor(Math.random() * bigGifts.length)];
         const user = FAKE_USERS[Math.floor(Math.random() * FAKE_USERS.length)];
         triggerGiftNotif(user, gift);
-        setFullScreenGift({ gift, user });
-        setTimeout(() => setFullScreenGift(null), 8000);
+        setFullScreenGift({ gift, user, triggerId: Date.now() });
+        // No setTimeout here; let <video onEnded> handle it for epic gifts
       }
     }, 8000);
     return () => clearInterval(interval);
@@ -272,8 +272,8 @@ function App() {
       const universeGift = GIFTS.find(g => g.id === 'universe');
       const user = FAKE_USERS[Math.floor(Math.random() * FAKE_USERS.length)];
       triggerGiftNotif(user, universeGift);
-      setFullScreenGift({ gift: universeGift, user });
-      setTimeout(() => setFullScreenGift(null), 8000);
+      setFullScreenGift({ gift: universeGift, user, triggerId: Date.now() });
+      // Let onEnded handle cleanup
     };
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
@@ -483,13 +483,15 @@ function App() {
             {/* If video files exist, they will play here. Otherwise, CSS particles show. */}
             {(fullScreenGift.gift.id === 'lion' || fullScreenGift.gift.id === 'universe') ? (
               <video 
+                key={fullScreenGift.triggerId} 
                 autoPlay 
+                playsInline
                 className="fullscreen-gift-video"
                 onEnded={() => setFullScreenGift(null)}
                 src={`/videos/${fullScreenGift.gift.id}.mp4`}
                 onError={(e) => {
-                  // Fallback to CSS sparkles if video fails
-                  e.target.style.display = 'none';
+                  console.error("Video failed to load:", fullScreenGift.gift.id);
+                  setFullScreenGift(null);
                 }}
               />
             ) : null}
