@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { MicOff } from 'lucide-react';
 import './index.css';
 
 /* ============================================================
@@ -36,7 +37,7 @@ const FAKE_USERS = Array.from({ length: 150 }, (_, i) => {
 });
 
 const BASE_COMMENTS = [
-  'Hey!! 🔥', 'Love this stream!', 'Hi from Brazil 🇧🇷', 'You are amazing!! 💖', 'Say my name pls 🙏', '🥰🥰🥰', 'First time here!', 'Sending gifts!!', 'How are you today?', 'Wow so beautiful ✨', 'Hello from Tokyo 🇯🇵', 'You deserve more followers!', 'Keep going! 💪', 'I love your content', 'Hiii 👋👋', 'Drop some gifts yall 🎁', 'Omg this is so cool', 'Can you sing for us? 🎤', 'I watch you every day', 'So pretty!', 'Hi from Germany 🇩🇪', 'boss up me', 'posso subir? amigo Portugal 🙏🙏', 'You dropped this 👑', 'Bro is so talented', 'W stream', 'Lets goooo', 'Chat moving too fast', 'Who else is new here?', 'My favorite tiktoker', 'Love the vibes here', 'Can I get a shoutout?', 'Please notice me 🥺', 'This is my comfort stream', 'Sending roses 🌹', 'Tap the screen guys!', 'Lets get to 100k likes', '🔥🔥🔥', '✨✨✨', 'omg yes', 'no way!!', 'What time is it there?', 'I wish I could stream like this', 'You are so funny', 'Haha true', 'Agree 100%'
+  'Hey!! 🔥', 'Love this stream!', 'Hi from Brazil 🇧🇷', 'You are amazing!! 💖', 'Say my name pls 🙏', '🥰🥰🥰', 'First time here!', 'How are you today?', 'Wow so beautiful ✨', 'Hello from Tokyo 🇯🇵', 'You deserve more followers!', 'Keep going! 💪', 'I love your content', 'Hiii 👋👋', 'Omg this is so cool', 'Can you sing for us? 🎤', 'I watch you every day', 'So pretty!', 'Hi from Germany 🇩🇪', 'boss up me', 'posso subir? amigo Portugal 🙏🙏', 'You dropped this 👑', 'Bro is so talented', 'W stream', 'Lets goooo', 'Chat moving too fast', 'Who else is new here?', 'My favorite tiktoker', 'Love the vibes here', 'Can I get a shoutout?', 'Please notice me 🥺', 'This is my comfort stream', 'Tap the screen guys!', 'Lets get to 100k likes', '🔥🔥🔥', '✨✨✨', 'omg yes', 'no way!!', 'What time is it there?', 'I wish I could stream like this', 'You are so funny', 'Haha true', 'Agree 100%'
 ];
 
 const CHAT_TEXTS = Array.from({ length: 200 }, () => {
@@ -156,11 +157,10 @@ function App() {
   const triggerGiftNotif = useCallback((user, gift) => {
     const id = Date.now() + Math.random();
     const combo = 1 + Math.floor(Math.random() * 5);
-    setGiftNotifs(prev => [...prev.slice(-2), { id, user, gift, combo }]);
-    setChatMessages(prev => [...prev.slice(-25), {
-      user, text: `sent ${gift.name}`, isGift: true, giftImg: gift.img
-    }]);
-    setTimeout(() => setGiftNotifs(prev => prev.filter(n => n.id !== id)), 4000);
+    if (gift.id === 'rose') {
+      setGiftNotifs(prev => [...prev.slice(-2), { id, user, gift, combo }]);
+      setTimeout(() => setGiftNotifs(prev => prev.filter(n => n.id !== id)), 4000);
+    }
   }, []);
 
   const handleSendGift = useCallback(() => {
@@ -188,16 +188,33 @@ function App() {
 
   // ── Effects ──
 
+  // Preload gift animation videos on mount
+  useEffect(() => {
+    const videoUrls = ['/videos/universe.mp4', '/videos/lion.mp4'];
+    videoUrls.forEach(url => {
+      const video = document.createElement('video');
+      video.preload = 'auto';
+      video.muted = true;
+      video.src = url;
+      video.load();
+    });
+    // Also preload all gift images
+    GIFTS.forEach(g => {
+      const img = new Image();
+      img.src = g.img;
+    });
+  }, []);
+
   // Auto-generate chat messages
   useEffect(() => {
     const interval = setInterval(() => {
       const user = FAKE_USERS[Math.floor(Math.random() * FAKE_USERS.length)];
-      const isSystem = Math.random() < 0.15;
+      const isSystem = Math.random() < 0.10;
       const msg = isSystem
         ? { user, text: SYSTEM_MESSAGES[Math.floor(Math.random() * SYSTEM_MESSAGES.length)], isSystem: true }
         : { user, text: CHAT_TEXTS[Math.floor(Math.random() * CHAT_TEXTS.length)], isSystem: false };
-      setChatMessages(prev => [...prev.slice(-25), msg]);
-    }, 1800 + Math.random() * 1500);
+      setChatMessages(prev => [...prev.slice(-30), msg]);
+    }, 400 + Math.random() * 600);
     return () => clearInterval(interval);
   }, []);
 
@@ -214,24 +231,41 @@ function App() {
     return () => clearInterval(interval);
   }, []);
 
-  // Simulate random gift sends from other users
+  // Simulate random gift sends from other users (Waves with pauses)
   useEffect(() => {
-    const interval = setInterval(() => {
-      if (Math.random() < 0.35) {
-        const user = FAKE_USERS[Math.floor(Math.random() * FAKE_USERS.length)];
-        const standardGifts = GIFTS.filter(g => g.tier === 'standard');
-        const gift = standardGifts[Math.floor(Math.random() * standardGifts.length)];
-        triggerGiftNotif(user, gift);
+    let timeoutId;
+    let giftsInCurrentWave = 0;
+    
+    const triggerNextGift = () => {
+      // If we've sent a bunch of gifts in this wave (5 to 15 gifts), take a pause
+      if (giftsInCurrentWave > 5 + Math.random() * 10) {
+        giftsInCurrentWave = 0;
+        // Pause between waves: 4 to 8 seconds
+        timeoutId = setTimeout(triggerNextGift, 4000 + Math.random() * 4000);
+        return;
       }
-    }, 6000 + Math.random() * 4000);
-    return () => clearInterval(interval);
+      
+      // Otherwise, fire a gift rapidly (wave is active)
+      if (Math.random() < 0.95) {
+        const user = FAKE_USERS[Math.floor(Math.random() * FAKE_USERS.length)];
+        const roseGift = GIFTS.find(g => g.id === 'rose');
+        triggerGiftNotif(user, roseGift);
+        giftsInCurrentWave++;
+      }
+      
+      // Fast interval during wave: 0.5 to 1.5 seconds
+      timeoutId = setTimeout(triggerNextGift, 500 + Math.random() * 1000);
+    };
+
+    timeoutId = setTimeout(triggerNextGift, 1000);
+    return () => clearTimeout(timeoutId);
   }, []);
 
   // Random huge gifts (Universe/Lion) automated trigger
   useEffect(() => {
     const interval = setInterval(() => {
-      // 3% chance every 8 seconds to randomly fire a massive gift
-      if (Math.random() < 0.03 && !fullScreenGift) {
+      // 15% chance every 3 seconds to randomly fire a massive gift
+      if (Math.random() < 0.15 && !fullScreenGift) {
         const bigGifts = GIFTS.filter(g => g.id === 'universe' || g.id === 'lion');
         const gift = bigGifts[Math.floor(Math.random() * bigGifts.length)];
         const user = FAKE_USERS[Math.floor(Math.random() * FAKE_USERS.length)];
@@ -239,7 +273,7 @@ function App() {
         setFullScreenGift({ gift, user, triggerId: Date.now() });
         // No setTimeout here; let <video onEnded> handle it for epic gifts
       }
-    }, 8000);
+    }, 3000);
     return () => clearInterval(interval);
   }, [fullScreenGift, triggerGiftNotif]);
 
@@ -255,29 +289,35 @@ function App() {
 
 
   
-  // Debug/Test triggers
+  // Debug/Test triggers: U = Universe, L = Lion
   useEffect(() => {
     const handleKeyDown = (e) => {
-      if (e.key.toLowerCase() === 'u') {
-        const universeGift = GIFTS.find(g => g.id === 'universe');
+      const key = e.key.toLowerCase();
+      if (key === 'u' || key === 'l') {
+        const giftId = key === 'u' ? 'universe' : 'lion';
+        const gift = GIFTS.find(g => g.id === giftId);
         const user = FAKE_USERS[Math.floor(Math.random() * FAKE_USERS.length)];
-        triggerGiftNotif(user, universeGift);
-        setFullScreenGift({ gift: universeGift, user });
-        setTimeout(() => setFullScreenGift(null), 8000);
+        triggerGiftNotif(user, gift);
+        setFullScreenGift({ gift, user, triggerId: Date.now() });
       }
     };
     window.addEventListener('keydown', handleKeyDown);
-    // Also expose to console
     window.triggerUniverse = () => {
-      const universeGift = GIFTS.find(g => g.id === 'universe');
+      const gift = GIFTS.find(g => g.id === 'universe');
       const user = FAKE_USERS[Math.floor(Math.random() * FAKE_USERS.length)];
-      triggerGiftNotif(user, universeGift);
-      setFullScreenGift({ gift: universeGift, user, triggerId: Date.now() });
-      // Let onEnded handle cleanup
+      triggerGiftNotif(user, gift);
+      setFullScreenGift({ gift, user, triggerId: Date.now() });
+    };
+    window.triggerLion = () => {
+      const gift = GIFTS.find(g => g.id === 'lion');
+      const user = FAKE_USERS[Math.floor(Math.random() * FAKE_USERS.length)];
+      triggerGiftNotif(user, gift);
+      setFullScreenGift({ gift, user, triggerId: Date.now() });
     };
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
       delete window.triggerUniverse;
+      delete window.triggerLion;
     };
   }, [triggerGiftNotif]);
 
@@ -332,7 +372,7 @@ function App() {
                 <span className="guest-name-small">{g.name}</span>
                 <div className="guest-actions">
                   <div className="guest-btn">➕</div>
-                  <div className="guest-btn">🔇</div>
+                  <div className="guest-btn"><MicOff size={14} color="rgba(255,255,255,0.7)" strokeWidth={2} /></div>
                 </div>
               </div>
             ))}
@@ -352,7 +392,7 @@ function App() {
                 <div className="notif-user">{n.user.name}</div>
                 <div className="notif-action">sent {n.gift.name}</div>
               </div>
-              <img src={n.gift.img} alt="" className="notif-gift-img" />
+              <img src={n.gift.img} className="notif-gift-img" alt="gift" />
               <div className="notif-combo-text">x{n.combo}</div>
             </div>
           ))}
@@ -486,7 +526,7 @@ function App() {
                 key={fullScreenGift.triggerId} 
                 autoPlay 
                 playsInline
-                className="fullscreen-gift-video"
+                className={`fullscreen-gift-video gift-${fullScreenGift.gift.id}`}
                 onEnded={() => setFullScreenGift(null)}
                 src={`/videos/${fullScreenGift.gift.id}.mp4`}
                 onError={(e) => {
