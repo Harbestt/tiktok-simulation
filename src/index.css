@@ -270,9 +270,67 @@ html, body, #root {
    ============================================================ */
 .middle-zone {
   flex: 1;
-  position: relative;
-  pointer-events: auto;
-  cursor: pointer;
+  width: 100%;
+}
+
+.pinned-comment {
+  position: absolute;
+  bottom: 100%;
+  left: 12px;
+  max-width: calc(100% - 80px); /* Leave room on the right */
+  background: rgba(0, 0, 0, 0.15); /* More transparent */
+  backdrop-filter: blur(4px);
+  border-radius: 12px;
+  padding: 8px 12px;
+  margin-bottom: 8px; /* Gap above chat feed */
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 13px;
+  color: #fff;
+  animation: slide-in 0.3s ease-out;
+  border: 0.5px solid rgba(255,255,255,0.05);
+  z-index: 100;
+}
+
+.pinned-header {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  color: rgba(255,255,255,0.6);
+  font-weight: 500;
+}
+
+.pinned-content {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.pinned-avatar {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.pinned-user {
+  font-weight: 600;
+  color: rgba(255,255,255,0.9);
+}
+
+.pinned-text {
+  color: #fff;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.pinned-gift-icon {
+  width: 20px;
+  height: 20px;
+  object-fit: contain;
 }
 
 /* ============================================================

@@ -129,10 +129,12 @@ function App() {
   const [floatingHearts, setFloatingHearts] = useState([]);
   const [giftNotifs, setGiftNotifs] = useState([]);
   const [fullScreenGift, setFullScreenGift] = useState(null);
+  const [giftQueue, setGiftQueue] = useState([]);
+  const [pinnedComment, setPinnedComment] = useState(null);
 
   // Multi-guest mock data
   const [guests, setGuests] = useState([
-    { name: 'joeljul...', avatar: 'https://i.pravatar.cc/100?img=10', coins: '89.9K' },
+    { name: 'Jwif Sahid', avatar: 'https://i.pravatar.cc/100?img=11', coins: '89.9K' },
     { name: 'joeljul...', avatar: 'https://i.pravatar.cc/100?img=12', coins: '29.9K' },
     { name: 'joeljul...', avatar: 'https://i.pravatar.cc/100?img=15', coins: '59.9K' },
     { name: 'Lisa ...', avatar: 'https://i.pravatar.cc/100?img=20', coins: '149.9K' },
@@ -145,6 +147,14 @@ function App() {
   const chatEndRef = useRef(null);
   const heartColors = ['#fe2c55', '#ff6b81', '#ff4757', '#ff6348', '#e84393', '#fd79a8'];
 
+  // Process gift queue
+  useEffect(() => {
+    if (!fullScreenGift && giftQueue.length > 0) {
+      setFullScreenGift(giftQueue[0]);
+      setGiftQueue(prev => prev.slice(1));
+    }
+  }, [fullScreenGift, giftQueue]);
+
   // ── Callbacks ──
   const handleLike = useCallback(() => {
     setLikes(prev => prev + 1);
@@ -154,13 +164,18 @@ function App() {
     setTimeout(() => setFloatingHearts(prev => prev.filter(h => h.id !== id)), 2600);
   }, []);
 
-  const triggerGiftNotif = useCallback((user, gift) => {
+  const triggerGiftNotif = useCallback((user, gift, forcedCombo = null) => {
     const id = Date.now() + Math.random();
-    const combo = 1 + Math.floor(Math.random() * 5);
-    if (gift.id === 'rose') {
-      setGiftNotifs(prev => [...prev.slice(-2), { id, user, gift, combo }]);
-      setTimeout(() => setGiftNotifs(prev => prev.filter(n => n.id !== id)), 4000);
+    const combo = forcedCombo || (1 + Math.floor(Math.random() * 5));
+    // Allow standard gifts and epic gifts to show in the left notification pill
+    setGiftNotifs(prev => [...prev.slice(-2), { id, user, gift, combo }]);
+    
+    // Pin big senders (stays until cleared by pressing 'P')
+    if (gift.tier === 'epic') {
+      setPinnedComment({ id, user, gift, combo });
     }
+    
+    setTimeout(() => setGiftNotifs(prev => prev.filter(n => n.id !== id)), 4000);
   }, []);
 
   const handleSendGift = useCallback(() => {
@@ -174,7 +189,7 @@ function App() {
     setShowGiftPanel(false);
     const me = { name: 'You', avatar: 'https://i.pravatar.cc/40?img=47', level: 50 };
     if (selectedGift.tier === 'epic' || selectedGift.cost >= 5000) {
-      setFullScreenGift({ gift: selectedGift, user: me, triggerId: Date.now() });
+      setGiftQueue(prev => [...prev, { gift: selectedGift, user: me, triggerId: Date.now() }]);
       // Let onEnded handle cleanup
     }
     triggerGiftNotif(me, selectedGift);
@@ -214,7 +229,7 @@ function App() {
         ? { user, text: SYSTEM_MESSAGES[Math.floor(Math.random() * SYSTEM_MESSAGES.length)], isSystem: true }
         : { user, text: CHAT_TEXTS[Math.floor(Math.random() * CHAT_TEXTS.length)], isSystem: false };
       setChatMessages(prev => [...prev.slice(-30), msg]);
-    }, 400 + Math.random() * 600);
+    }, 800 + Math.random() * 1200);
     return () => clearInterval(interval);
   }, []);
 
@@ -227,7 +242,7 @@ function App() {
   useEffect(() => {
     const interval = setInterval(() => {
       setViewers(prev => Math.max(100, prev + Math.floor(Math.random() * 21) - 10));
-    }, 4000);
+    }, 8000);
     return () => clearInterval(interval);
   }, []);
 
@@ -240,8 +255,8 @@ function App() {
       // If we've sent a bunch of gifts in this wave (5 to 15 gifts), take a pause
       if (giftsInCurrentWave > 5 + Math.random() * 10) {
         giftsInCurrentWave = 0;
-        // Pause between waves: 4 to 8 seconds
-        timeoutId = setTimeout(triggerNextGift, 4000 + Math.random() * 4000);
+        // Pause between waves: 10 to 20 seconds
+        timeoutId = setTimeout(triggerNextGift, 10000 + Math.random() * 10000);
         return;
       }
       
@@ -253,27 +268,30 @@ function App() {
         giftsInCurrentWave++;
       }
       
-      // Fast interval during wave: 0.5 to 1.5 seconds
-      timeoutId = setTimeout(triggerNextGift, 500 + Math.random() * 1000);
+      // Fast interval during wave: 2.0 to 4.5 seconds
+      timeoutId = setTimeout(triggerNextGift, 2000 + Math.random() * 2500);
     };
 
-    timeoutId = setTimeout(triggerNextGift, 1000);
+    timeoutId = setTimeout(triggerNextGift, 2000);
     return () => clearTimeout(timeoutId);
-  }, []);
+  }, [triggerGiftNotif]);
 
   // Random huge gifts (Universe/Lion) automated trigger
   useEffect(() => {
     const interval = setInterval(() => {
-      // 15% chance every 3 seconds to randomly fire a massive gift
-      if (Math.random() < 0.15 && !fullScreenGift) {
+      // 10% chance every 6 seconds to randomly fire a massive gift
+      if (Math.random() < 0.10 && !fullScreenGift) {
         const bigGifts = GIFTS.filter(g => g.id === 'universe' || g.id === 'lion');
         const gift = bigGifts[Math.floor(Math.random() * bigGifts.length)];
         const user = FAKE_USERS[Math.floor(Math.random() * FAKE_USERS.length)];
-        triggerGiftNotif(user, gift);
-        setFullScreenGift({ gift, user, triggerId: Date.now() });
-        // No setTimeout here; let <video onEnded> handle it for epic gifts
+        const combo = 1 + Math.floor(Math.random() * 3);
+        triggerGiftNotif(user, gift, combo);
+        
+        for (let i = 0; i < combo; i++) {
+          setGiftQueue(prev => [...prev, { gift, user, triggerId: Date.now() + i }]);
+        }
       }
-    }, 3000);
+    }, 6000);
     return () => clearInterval(interval);
   }, [fullScreenGift, triggerGiftNotif]);
 
@@ -296,23 +314,31 @@ function App() {
       if (key === 'u' || key === 'l') {
         const giftId = key === 'u' ? 'universe' : 'lion';
         const gift = GIFTS.find(g => g.id === giftId);
+        
         const user = FAKE_USERS[Math.floor(Math.random() * FAKE_USERS.length)];
-        triggerGiftNotif(user, gift);
-        setFullScreenGift({ gift, user, triggerId: Date.now() });
+        const combo = 1 + Math.floor(Math.random() * 3);
+        triggerGiftNotif(user, gift, combo);
+        
+        for (let i = 0; i < combo; i++) {
+          setGiftQueue(prev => [...prev, { gift, user, triggerId: Date.now() + i }]);
+        }
+      }
+      
+      // 'p' key clears the pinned comment
+      if (key === 'p') {
+        setPinnedComment(null);
       }
     };
     window.addEventListener('keydown', handleKeyDown);
     window.triggerUniverse = () => {
       const gift = GIFTS.find(g => g.id === 'universe');
       const user = FAKE_USERS[Math.floor(Math.random() * FAKE_USERS.length)];
-      triggerGiftNotif(user, gift);
-      setFullScreenGift({ gift, user, triggerId: Date.now() });
+      setGiftQueue(prev => [...prev, { gift, user, triggerId: Date.now() }]);
     };
     window.triggerLion = () => {
       const gift = GIFTS.find(g => g.id === 'lion');
       const user = FAKE_USERS[Math.floor(Math.random() * FAKE_USERS.length)];
-      triggerGiftNotif(user, gift);
-      setFullScreenGift({ gift, user, triggerId: Date.now() });
+      setGiftQueue(prev => [...prev, { gift, user, triggerId: Date.now() }]);
     };
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
@@ -331,7 +357,11 @@ function App() {
   return (
     <div className={`app bg-${bgMode} ${isFullscreen ? 'fullscreen' : ''}`}>
 
-
+      {/* Hidden preloader block for heavy videos */}
+      <div style={{ position: 'absolute', width: 1, height: 1, opacity: 0, pointerEvents: 'none', overflow: 'hidden' }}>
+        <video src="/videos/lion.mp4" preload="auto" muted playsInline />
+        <video src="/videos/universe.mp4" preload="auto" muted playsInline />
+      </div>
 
       <div className="phone-frame">
 
@@ -412,6 +442,24 @@ function App() {
 
         {/* ── Bottom Section ── */}
         <div className="bottom">
+          
+          {/* Pinned Comment Banner */}
+          {pinnedComment && (
+            <div className="pinned-comment">
+              <div className="pinned-header">
+                📌 Pinned
+              </div>
+              <div className="pinned-content">
+                <span style={{fontSize: '16px', marginRight: '4px'}}>🎁</span>
+                <img src={pinnedComment.user.avatar} alt="" className="pinned-avatar" />
+                <span className="pinned-text">
+                  <span className="pinned-user">{pinnedComment.user.name}</span> sent {pinnedComment.gift.name} x{pinnedComment.combo}
+                  <img src={pinnedComment.gift.img} alt="" className="pinned-gift-icon" />
+                </span>
+              </div>
+            </div>
+          )}
+
           <div className="chat-feed">
             {chatMessages.map((msg, idx) => (
               <div key={idx} className="chat-row">
@@ -525,6 +573,7 @@ function App() {
               <video 
                 key={fullScreenGift.triggerId} 
                 autoPlay 
+                muted
                 playsInline
                 className={`fullscreen-gift-video gift-${fullScreenGift.gift.id}`}
                 onEnded={() => setFullScreenGift(null)}
