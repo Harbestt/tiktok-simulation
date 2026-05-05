@@ -274,15 +274,12 @@ html, body, #root {
 }
 
 .pinned-comment {
-  position: absolute;
-  bottom: 100%;
-  left: 12px;
-  max-width: calc(100% - 80px); /* Leave room on the right */
-  background: rgba(0, 0, 0, 0.15); /* More transparent */
-  backdrop-filter: blur(4px);
-  border-radius: 12px;
-  padding: 8px 12px;
-  margin-bottom: 8px; /* Gap above chat feed */
+  background: rgba(0, 0, 0, 0.05); /* Extremely transparent */
+  backdrop-filter: blur(2px);
+  border-radius: 8px;
+  padding: 6px 10px;
+  margin: 16px 0 0 0; /* Push away from top, align left, touch comments below */
+  align-self: flex-start;
   display: flex;
   flex-direction: column;
   gap: 4px;
@@ -290,16 +287,8 @@ html, body, #root {
   color: #fff;
   animation: slide-in 0.3s ease-out;
   border: 0.5px solid rgba(255,255,255,0.05);
+  flex-shrink: 0;
   z-index: 100;
-}
-
-.pinned-header {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  font-size: 11px;
-  color: rgba(255,255,255,0.6);
-  font-weight: 500;
 }
 
 .pinned-content {
