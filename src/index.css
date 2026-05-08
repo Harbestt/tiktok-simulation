@@ -275,7 +275,7 @@ html, body, #root {
 
 .pinned-comment-wrapper {
   position: absolute;
-  bottom: 310px; /* Sits just above the chat/bottom area */
+  bottom: 260px; /* Right at the top of the chat area */
   left: 10px;
   right: 80px; /* Leave room for hearts on the right */
   z-index: 200;
