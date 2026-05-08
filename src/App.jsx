@@ -170,15 +170,15 @@ function App() {
     setTimeout(() => setFloatingHearts(prev => prev.filter(h => h.id !== id)), 2600);
   }, []);
 
-  const triggerGiftNotif = useCallback((user, gift, forcedCombo = null) => {
+  const triggerGiftNotif = useCallback((user, gift, forcedCombo = null, targetName = null) => {
     const id = Date.now() + Math.random();
     const combo = forcedCombo || (1 + Math.floor(Math.random() * 5));
     // Allow standard gifts and epic gifts to show in the left notification pill
-    setGiftNotifs(prev => [...prev.slice(-2), { id, user, gift, combo }]);
+    setGiftNotifs(prev => [...prev.slice(-2), { id, user, gift, combo, targetName }]);
     
     // Pin big senders (stays until cleared by pressing 'P')
     if (gift.tier === 'epic') {
-      setPinnedComment({ id, user, gift, combo });
+      setPinnedComment({ id, user, gift, combo, targetName });
     }
     
     setTimeout(() => setGiftNotifs(prev => prev.filter(n => n.id !== id)), 4000);
@@ -369,8 +369,8 @@ function App() {
     const gift = GIFTS.find(g => g.id === adminGiftType);
     const hostUser = { name: 'Enigma World 👑', avatar: '/enigma_logo.png' };
     
-    // Pass combo explicitely so it pins properly
-    triggerGiftNotif(hostUser, gift, adminComboCount);
+    // Pass combo explicitely so it pins properly, and add targetName
+    triggerGiftNotif(hostUser, gift, adminComboCount, adminTargetName);
     
     // 3. Queue video
     for (let i = 0; i < adminComboCount; i++) {
@@ -420,7 +420,12 @@ function App() {
           <label>Fake Chat Sim:</label>
           <button 
             className={`toggle-btn ${fakeChatEnabled ? 'on' : 'off'}`}
-            onClick={() => setFakeChatEnabled(!fakeChatEnabled)}
+            onClick={() => {
+              if (fakeChatEnabled) {
+                setChatMessages([]); // Instantly clear chat when turned off
+              }
+              setFakeChatEnabled(!fakeChatEnabled);
+            }}
           >
             {fakeChatEnabled ? 'ON' : 'OFF'}
           </button>
@@ -490,7 +495,7 @@ function App() {
               <img src={n.user.avatar || 'https://i.pravatar.cc/40?img=1'} alt="" className="notif-avatar" />
               <div className="notif-pill-content">
                 <div className="notif-user">{n.user.name}</div>
-                <div className="notif-action">sent {n.gift.name}</div>
+                <div className="notif-action">sent {n.gift.name} {n.targetName ? `to ${n.targetName}` : ''}</div>
               </div>
               <img src={n.gift.img} className="notif-gift-img" alt="gift" />
               <div className="notif-combo-text">x{n.combo}</div>
@@ -520,7 +525,7 @@ function App() {
                 <span style={{fontSize: '16px', marginRight: '4px'}}>🎁</span>
                 <img src={pinnedComment.user.avatar} alt="" className="pinned-avatar" />
                 <span className="pinned-text">
-                  <span className="pinned-user">{pinnedComment.user.name}</span> sent {pinnedComment.gift.name} x{pinnedComment.combo}
+                  <span className="pinned-user">{pinnedComment.user.name}</span> sent {pinnedComment.gift.name} {pinnedComment.targetName ? `to ${pinnedComment.targetName}` : ''} x{pinnedComment.combo}
                 </span>
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{marginLeft: '6px', color: '#fff', flexShrink: 0, transform: 'rotate(45deg)'}}>
                   <line x1="12" y1="17" x2="12" y2="22"></line>
