@@ -273,6 +273,15 @@ html, body, #root {
   width: 100%;
 }
 
+.pinned-comment-wrapper {
+  position: absolute;
+  bottom: 310px; /* Sits just above the chat/bottom area */
+  left: 10px;
+  right: 80px; /* Leave room for hearts on the right */
+  z-index: 200;
+  pointer-events: none;
+}
+
 .pinned-comment {
   background: rgba(0, 0, 0, 0.05); /* Extremely transparent */
   backdrop-filter: blur(2px);
@@ -1021,9 +1030,9 @@ html, body, #root {
    ADMIN CONTROL PANEL (HIDDEN FROM OBS)
    ============================================================ */
 .admin-panel {
-  position: absolute;
+  position: fixed;
   top: 20px;
-  right: 20px; /* Sits on the far right of the desktop monitor, safely away from the centered phone frame */
+  right: 20px;
   width: 280px;
   background: rgba(20, 20, 20, 0.95);
   border: 1px solid rgba(255, 255, 255, 0.1);
@@ -1034,6 +1043,13 @@ html, body, #root {
   flex-direction: column;
   gap: 12px;
   z-index: 9999;
+}
+
+/* Hide admin panel on mobile / small screens (phone frame takes full width) */
+@media (max-width: 768px) {
+  .admin-panel {
+    display: none;
+  }
 }
 
 .admin-panel h3 {

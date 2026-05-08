@@ -515,11 +515,9 @@ function App() {
         {/* Click zone for hearts */}
         <div className="middle-zone" onClick={handleLike} style={{height: '20%'}} />
 
-        {/* ── Bottom Section ── */}
-        <div className="bottom">
-          
-          {/* Pinned Comment Banner */}
-          {pinnedComment && (
+        {/* Pinned Comment Banner - always visible, independent of chat */}
+        {pinnedComment && (
+          <div className="pinned-comment-wrapper">
             <div className="pinned-comment">
               <div className="pinned-content">
                 <span style={{fontSize: '16px', marginRight: '4px'}}>🎁</span>
@@ -533,7 +531,11 @@ function App() {
                 </svg>
               </div>
             </div>
-          )}
+          </div>
+        )}
+
+        {/* ── Bottom Section ── */}
+        <div className="bottom">
 
           <div className="chat-feed">
             {chatMessages.map((msg, idx) => (
