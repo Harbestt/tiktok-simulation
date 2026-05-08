@@ -1016,3 +1016,93 @@ html, body, #root {
    SCROLLBAR HIDE
    ============================================================ */
 ::-webkit-scrollbar { width: 0; height: 0; }
+
+/* ============================================================
+   ADMIN CONTROL PANEL (HIDDEN FROM OBS)
+   ============================================================ */
+.admin-panel {
+  position: absolute;
+  top: 20px;
+  right: 20px; /* Sits on the far right of the desktop monitor, safely away from the centered phone frame */
+  width: 280px;
+  background: rgba(20, 20, 20, 0.95);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 16px;
+  color: #fff;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  z-index: 9999;
+}
+
+.admin-panel h3 {
+  margin: 0 0 8px 0;
+  font-size: 16px;
+  text-align: center;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  padding-bottom: 8px;
+}
+
+.admin-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.admin-group label {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.6);
+  text-transform: uppercase;
+  font-weight: 600;
+}
+
+.admin-group input,
+.admin-group select {
+  background: rgba(0, 0, 0, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 6px;
+  padding: 8px;
+  color: #fff;
+  font-size: 14px;
+  outline: none;
+}
+
+.admin-btn {
+  background: var(--tt-brand);
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 10px;
+  font-weight: 700;
+  cursor: pointer;
+  margin-top: 8px;
+}
+
+.admin-btn:hover {
+  background: #e6284d;
+}
+
+.admin-panel hr {
+  border: none;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  margin: 8px 0;
+}
+
+.toggle-group {
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.toggle-btn {
+  border: none;
+  border-radius: 4px;
+  padding: 4px 12px;
+  font-weight: 700;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.toggle-btn.on { background: #00c300; color: #fff; }
+.toggle-btn.off { background: #ff4757; color: #fff; }

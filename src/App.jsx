@@ -132,6 +132,12 @@ function App() {
   const [giftQueue, setGiftQueue] = useState([]);
   const [pinnedComment, setPinnedComment] = useState(null);
 
+  // Admin Panel State
+  const [fakeChatEnabled, setFakeChatEnabled] = useState(true);
+  const [adminTargetName, setAdminTargetName] = useState('Jwif Sahid');
+  const [adminGiftType, setAdminGiftType] = useState('lion');
+  const [adminComboCount, setAdminComboCount] = useState(1);
+
   // Multi-guest mock data
   const [guests, setGuests] = useState([
     { name: 'Jwif Sahid', avatar: 'https://i.pravatar.cc/100?img=11', coins: '89.9K' },
@@ -222,6 +228,8 @@ function App() {
 
   // Auto-generate chat messages
   useEffect(() => {
+    if (!fakeChatEnabled) return;
+    
     const interval = setInterval(() => {
       const user = FAKE_USERS[Math.floor(Math.random() * FAKE_USERS.length)];
       const isSystem = Math.random() < 0.10;
@@ -231,7 +239,7 @@ function App() {
       setChatMessages(prev => [...prev.slice(-30), msg]);
     }, 800 + Math.random() * 1200);
     return () => clearInterval(interval);
-  }, []);
+  }, [fakeChatEnabled]);
 
   // Auto-scroll chat
   useEffect(() => {
@@ -347,6 +355,29 @@ function App() {
     };
   }, [triggerGiftNotif]);
 
+  const handleAdminSend = useCallback(() => {
+    if (!adminTargetName.trim()) return;
+    
+    // 1. Put user on screen (replace 1st guest)
+    setGuests(prev => {
+      const newGuests = [...prev];
+      newGuests[0] = { ...newGuests[0], name: adminTargetName };
+      return newGuests;
+    });
+
+    // 2. Trigger Gift
+    const gift = GIFTS.find(g => g.id === adminGiftType);
+    const hostUser = { name: 'Enigma World 👑', avatar: '/enigma_logo.png' };
+    
+    // Pass combo explicitely so it pins properly
+    triggerGiftNotif(hostUser, gift, adminComboCount);
+    
+    // 3. Queue video
+    for (let i = 0; i < adminComboCount; i++) {
+      setGiftQueue(prev => [...prev, { gift, user: hostUser, triggerId: Date.now() + i }]);
+    }
+  }, [adminTargetName, adminGiftType, adminComboCount, triggerGiftNotif]);
+
   // Filter gifts by tab
   const filteredGifts = giftTab === 'Popular'
     ? GIFTS
@@ -356,6 +387,45 @@ function App() {
 
   return (
     <div className={`app bg-${bgMode} ${isFullscreen ? 'fullscreen' : ''}`}>
+
+      {/* ── Admin Control Panel ── */}
+      <div className="admin-panel">
+        <h3>Host Controls</h3>
+        
+        <div className="admin-group">
+          <label>Target Viewer Name:</label>
+          <input type="text" value={adminTargetName} onChange={e => setAdminTargetName(e.target.value)} />
+        </div>
+        
+        <div className="admin-group">
+          <label>Gift Type:</label>
+          <select value={adminGiftType} onChange={e => setAdminGiftType(e.target.value)}>
+            <option value="lion">Lion</option>
+            <option value="universe">Universe</option>
+          </select>
+        </div>
+        
+        <div className="admin-group">
+          <label>Combo Count (x):</label>
+          <input type="number" min="1" max="100" value={adminComboCount} onChange={e => setAdminComboCount(parseInt(e.target.value) || 1)} />
+        </div>
+        
+        <button className="admin-btn" onClick={handleAdminSend}>
+          Bring on Screen & Send Gift
+        </button>
+
+        <hr />
+
+        <div className="admin-group toggle-group">
+          <label>Fake Chat Sim:</label>
+          <button 
+            className={`toggle-btn ${fakeChatEnabled ? 'on' : 'off'}`}
+            onClick={() => setFakeChatEnabled(!fakeChatEnabled)}
+          >
+            {fakeChatEnabled ? 'ON' : 'OFF'}
+          </button>
+        </div>
+      </div>
 
       {/* Hidden preloader block for heavy videos */}
       <div style={{ position: 'absolute', width: 1, height: 1, opacity: 0, pointerEvents: 'none', overflow: 'hidden' }}>
